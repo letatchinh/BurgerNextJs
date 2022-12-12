@@ -1,7 +1,9 @@
 .container {
   padding: 0 2rem;
 }
-
+.justifyBetween{
+  justify-content: space-between;
+}
 .main {
   min-height: 100vh;
   padding: 4rem 0;
