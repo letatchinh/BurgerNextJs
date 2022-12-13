@@ -10,6 +10,7 @@ export default function Footer() {
         height: "50px",
         textAlign: "center",
         padding: "10px 0",
+        marginTop : '50px'
       }}
     >
       Footer
