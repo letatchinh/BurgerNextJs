@@ -1,4 +1,5 @@
 import { Button, Modal, Space } from "antd";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import Calculate from "./Calculate";
@@ -7,9 +8,10 @@ import TotalBill from "./TotalBill";
 
 export default function CalculatedBill() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const {data}= useSession()
   const router = useRouter()
   const showModal = () => {
-    if(localStorage.getItem(process.env.NEXT_PUBLIC_LOCALSTORED_KEY)){
+    if(data){
       setIsModalOpen(true);
     }
     else{

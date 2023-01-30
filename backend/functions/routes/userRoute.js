@@ -16,14 +16,17 @@ router.post("/api/users", async (req, res) => {
     const query = await db.collection("users").get();
     const docs = query.docs;
     const response = {};
+    const username = req.body.username.toLowerCase()
+    const password = req.body.password.toLowerCase()
     const isOk = docs.some((item) => {
       if (
-        req.body.username === item.data().username &&
-        req.body.password === item.data().password
+        username === item.data().username &&
+        password === item.data().password
       ) {
         (response.id = item.id),
         (response.name = item.data().name),
         (response.username = item.data().username);
+        (response.isAdmin = item.data().isAdmin);
         return true;
       }
       return false;
@@ -31,14 +34,52 @@ router.post("/api/users", async (req, res) => {
     if (isOk) {
       return res.status(200).json(response);
     } else {
-      return res.status(401).json({message: "Wrong"});
+      return res.status(400).json({message: "Wrong"});
+    }
+  } catch (error) {
+    throw new Error("Wrong username or password");
+  }
+});
+// LOGIN NATIVE
+router.post("/api/loginNative", async (req, res) => {
+  try {
+    const query = await db.collection("users").get();
+    const docs = query.docs;
+    const response = {};
+    const username = req.body.username.toLowerCase()
+    const password = req.body.password.toLowerCase()
+    const isOk = docs.some((item) => {
+      if (
+        username === item.data().username &&
+        password === item.data().password
+      ) {
+        (response.id = item.id),
+        (response.name = item.data().name),
+        (response.username = item.data().username);
+        (response.isAdmin = item.data().isAdmin);
+        (response.token = req.body.token);
+        return true;
+      }
+      return false;
+    });
+    if (isOk) {
+      const reqDoc = db.collection("users").doc(response.id)
+      await reqDoc.update({
+        isAdmin : response.isAdmin,
+        name : response.name,
+        password,
+        username : response.username,
+        token : req.body.token
+      })
+      return res.status(200).json(response);
+    } else {
+      return res.status(400).json({message: "Wrong"});
     }
   } catch (error) {
     throw new Error("Wrong username or password");
   }
 });
 router.post("/api/loginWithUsername", async (req, res) => {
-  try {
     const query = await db.collection("users").get();
     const docs = query.docs;
     const response = {};
@@ -53,12 +94,12 @@ router.post("/api/loginWithUsername", async (req, res) => {
     });
     if (isOk) {
       return res.status(200).json(response);
-    } else {
-      return res.status(401).json({message: "Wrong"});
+    } 
+    else {
+      res.status(401).json("Invalid email")
+      throw new Error("Invalid Email")
     }
-  } catch (error) {
-    throw new Error("Wrong username or password");
-  }
+
 });
 // Register
 router.post("/api/register", async (req, res) => {
@@ -71,7 +112,7 @@ router.post("/api/register", async (req, res) => {
     if (response.length !== 0) {
       return res.status(401).json({message: "Accont is exist"});
     } else {
-      const newAccount = {name, username, password};
+      const newAccount = {name, username, password , isAdmin : false};
       await query.doc(`/${v4()}/`).create(newAccount);
       return res.status(201).json(newAccount);
     }
@@ -82,9 +123,21 @@ router.post("/api/register", async (req, res) => {
 // ADD order
 router.post("/api/addOrder", async (req, res) => {
   try {
-    const {idUser, order, price, contact,timeStamp} = req.body;
+    const {email, order, price, contact,timeStamp} = req.body;
     const query = db.collection("orders");
-    const newOrder = {idUser, order, price, contact,timeStamp};
+    const newOrder = {email, order, price, contact,timeStamp};
+    await query.doc(`/${v4()}/`).create(newOrder);
+    return res.status(201).json(newOrder);
+  } catch (error) {
+    throw new Error("Some Think went wrong");
+  }
+});
+// ADD order ReactNative
+router.post("/api/addOrderReactNative", async (req, res) => {
+  try {
+    const {email, order, price,timeStamp,address} = req.body;
+    const query = db.collection("orders");
+    const newOrder = {email, order, price,timeStamp,address};
     await query.doc(`/${v4()}/`).create(newOrder);
     return res.status(201).json(newOrder);
   } catch (error) {
@@ -95,14 +148,14 @@ router.post("/api/addOrder", async (req, res) => {
 router.get("/api/userOrder/:idUser", async (req, res) => {
   try {
     const idUser = req.params.idUser;
-    const limit = req.query.limit || 4;
+    const limit = req.query.limit || 1;
     const page = req.query.page;
     const query = db.collection("orders");
     const check = await query.get();
     const check2 = check.docs;
     const arr = [];
     check2.forEach((item) => {
-      if (idUser === item.data().idUser) {
+      if (idUser === item.data().email) {
         arr.push(item.data());
       }
     });
@@ -114,4 +167,73 @@ router.get("/api/userOrder/:idUser", async (req, res) => {
     throw new Error("Some Think went wrong");
   }
 });
+// get ALl order
+router.get("/api/getAllOrder", async (req, res) => {
+  try {
+    const limit = req.query.limit || 1;
+    const page = req.query.page;
+    const query = db.collection("orders");
+    const check = await query.get();
+    const check2 = check.docs;
+    const arr = check2.map(item => item.data())
+    // check2.forEach((item) => {
+    //     arr.push(item.data());
+    // })
+    arr.sort((a,b) => b.timeStamp - a.timeStamp)
+    const arrResponse = arr.slice((page - 1) * limit, page * limit);
+    const pages = Math.floor(arr.length / limit + 1);
+    return res.status(200).json({arrResponse, limit, page, pages , count : arr.length});
+  } catch (error) {
+    throw new Error("Some Think went wrong");
+  }
+});
+// ADD TOken ReactNative
+router.post("/api/addTokenUser", async (req, res) => {
+  try {
+    const {body, date, statusAdmin,statusUser,title , tokenUser} = req.body;
+    const query = db.collection("messengerNotify");
+    const newToken = {body, date, statusAdmin,statusUser,title , tokenUser};
+    const check = await query.get();
+    const check2 = check.docs;
+    const response = check2.find((item) => tokenUser === item.data().tokenUser);
+    if(!response){
+       await query.doc(`/${v4()}/`).create(newToken);
+      return res.status(201).json(newToken);
+    }
+    else {
+      return res.status(200).json("Exist Token")
+    }
+    
+  } catch (error) {
+    throw new Error("Some Think went wrong");
+  }
+});
+// Send notify
+router.post("/sendFirebaseReactNative", async(req, res) => {
+  const query = await db.collection("users").get();
+    const docs = query.docs;
+    const userAdmin = docs.find(e => e.data().isAdmin === true)
+  const {title,body} = req.body
+  admin.messaging().send({
+    notification : {
+      title,
+      body
+    },
+    "android" : {
+      "notification" : {
+        "sound" : "default"
+      }
+    },
+    "apns" : {
+      "payload":{
+        "aps":{
+          "sound" : "default"
+        }
+      }
+    },  
+   token : userAdmin.data().token 
+  }).then(res => console.log(res)).catch(err => console.log(err))
+  res.status(201).json({mess: "OKLA"});
+});
+
 module.exports = router;

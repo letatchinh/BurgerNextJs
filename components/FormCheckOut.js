@@ -1,13 +1,14 @@
 import { Button, Form, Input } from "antd";
+import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { orderRequest } from "../redux/saga";
 
 export default function FormCheckOut({handleOk} ) {
   const [form] = Form.useForm();
+  const {data} = useSession()
   const burgerOrder = useSelector(state => state.burger)
   const [loading,setLoading] = useState(false)
-  const user = useSelector(state => state.user.user) || {}
   const dispatch = useDispatch()
   const setLoadings = (loading) => {
     setLoading(loading)
@@ -28,8 +29,8 @@ export default function FormCheckOut({handleOk} ) {
       };
       const onFinish = (values) => {
         const {name,email,numberPhone,address,note} = values.user
-        const newOrder = {contact : { address , email,name,note,phone : numberPhone} , idUser : user.id , order : burgerOrder.order , price : burgerOrder.totalBill , timeStamp : Date.now()}
-        dispatch(orderRequest({newOrder,offModal : () => handleOk() , setLoadings : setLoadings , reset : () => form.resetFields()}))
+        const newOrder = {contact : { address ,name,note,phone : numberPhone} ,email , order : burgerOrder.order , price : burgerOrder.totalBill , timeStamp : Date.now()}
+        // dispatch(orderRequest({newOrder,offModal : () => handleOk() , setLoadings : setLoadings , reset : () => form.resetFields()}))
       };
       const onError = (values) => {
         console.log(values);
@@ -39,8 +40,8 @@ export default function FormCheckOut({handleOk} ) {
       <Form.Item name={['user', 'name']} labelAlign={"left"} label="Name" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
-      <Form.Item name={['user', 'email']}  labelAlign={"left"} label="Email" rules={[{ type: 'email' }]}>
-        <Input />
+      <Form.Item name={['user', 'email']} initialValue={data && data.user.email}  labelAlign={"left"} label="Email" rules={[{ type: 'email' }]}>
+        <Input disabled/>
       </Form.Item>
       <Form.Item name={['user', 'numberPhone']} labelAlign={"left"} label="Number Phone" 
       >

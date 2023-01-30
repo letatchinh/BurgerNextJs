@@ -2,15 +2,22 @@ import { Card, Col, Row } from "antd"
 import axios from "axios"
 import Link from "next/link";
 import { v4 } from "uuid";
-import ItemBurger from "../../components/ItemBurger";
+import { useRouter } from 'next/router'
+
+import ItemBurger from "../../../components/ItemBurger";
+import Error404 from "../../../components/Error404";
 const { Meta } = Card;
 
-export default function Burger({posts}) {
+export default function Burgerss({posts}) {
+  const router = useRouter()
+  if (!router.isFallback && !posts) {
+    return <Error404 />;
+}
   return (
     <Row justify="space-around" style={{padding : '20px'}}>
     {posts.posts.map(e => 
     <Col key={v4()} span={5}>
-   <Link href={`burgers/${e.id}`}>
+   <Link href={`${e.id}.html`}>
    <Card
    hoverable
    style={{ width: 240 }}

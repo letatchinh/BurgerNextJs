@@ -11,6 +11,12 @@ export function registerRequest(payload) {
     payload,
   };
 }
+export function loginRequest(payload) {
+  return {
+    type: "AUTHENFIREBASE",
+    payload,
+  };
+}
 export function orderRequest(payload){
   return {
     type: "ORDER",

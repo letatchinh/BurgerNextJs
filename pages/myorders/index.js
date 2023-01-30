@@ -1,4 +1,5 @@
 import { Button, Pagination, Space, Typography } from "antd";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { useSelector } from "react-redux";
@@ -9,16 +10,16 @@ import axiosClient from "../../constant/AxiosConfig";
 import styles from "../../styles/table.module.scss";
 const fetcher = (url) => axiosClient.get(url).then((res) => res.data);
 const { Title } = Typography;
-
 export default function index() {
+
   const [page, setPage] = useState(1);
+  const {data:session} = useSession()
   const router = useRouter();
-  const user = useSelector((state) => state.user.user) || {};
+  // const user = useSelector((state) => state.user.user) || {};
   const { data, error } = useSWR(
-    `api/userOrder/${user.id}?page=${page}`,
+    `api/userOrder/${session && session.user.email}?page=${page}`,
     fetcher
   );
-  console.log(data);
   if (error) return <div>Failed to load</div>;
   return (
     <div style={{ padding: "50px 0" , margin : '0 auto' }}>

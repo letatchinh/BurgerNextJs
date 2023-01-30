@@ -4,18 +4,21 @@ import Link from "next/link";
 import styles from '../styles/Home.module.css'
 import { Button, Space, Typography } from "antd";
 import { LoginOutlined, LogoutOutlined } from "@ant-design/icons";
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 import axiosClient from '../constant/AxiosConfig';
 import { useDispatch, useSelector } from 'react-redux';
 import { addUser, removeUser } from '../redux/userSlice';
 import axios from 'axios';
+import { signOut, useSession } from 'next-auth/react';
 export default function Header() {
   const [status,setStatus] = useState(false)
-  const user = useSelector((state) => state.user.user)
   const dispatch = useDispatch()
+  const { data: session , status : statusSession } = useSession()
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
+      console.log(session);
       if (user) {
+        console.log(user);
         axiosClient.post(`api/loginWithUsername?username=${user.email}`).then(res => {
           if(res.status === 200){
             dispatch(addUser(res.data))
@@ -36,11 +39,12 @@ export default function Header() {
     });
   },[])
   const logout = () => {
-    signOut(auth).then(() => {
-      // Sign-out successful.
-    }).catch((error) => {
-      // An error happened.
-    });
+    signOut()
+    // signOut(auth).then(() => {
+    //   // Sign-out successful.
+    // }).catch((error) => {
+    //   // An error happened.
+    // });
   }
   return (
     <div style={{background : 'white' , boxShadow : '0 0 5px 2px #999'}}>
@@ -51,14 +55,14 @@ export default function Header() {
       Home
     </Button>
         </Link>
-        <Link href="/burgers">
+        <Link href="/burgers/index.html">
         <Button type="primary" >
       See More Burger
     </Button>
         </Link>
         </Space>
-        {status ?   <Space>
-        <Typography>Hello {user && user.name}</Typography>
+        {statusSession === 'loading' ? <div>...loading</div> : statusSession === "authenticated" ?   <Space>
+        <Typography>Hello {session && session.user.name}</Typography>
          <Link href="/myorders">
          <Button type="primary">
             My Order

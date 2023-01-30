@@ -3,8 +3,11 @@ import {store} from '../redux/store'
 import { Provider } from 'react-redux'
 import Layout from '../components/Layout'
 import { Toaster } from 'react-hot-toast'
-function MyApp({ Component, pageProps }) {
+import { SessionProvider } from "next-auth/react"
+
+function MyApp({ Component, pageProps:{session,...pageProps} }) {
   return (
+    <SessionProvider session={session}>
     <Provider store={store}>
     <Layout >
     <Toaster
@@ -14,6 +17,7 @@ function MyApp({ Component, pageProps }) {
       <Component {...pageProps} /> 
     </Layout>
     </Provider>
+    </SessionProvider>
   )
 }
 
